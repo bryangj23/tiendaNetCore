@@ -1,0 +1,210 @@
+https://www.youtube.com/watch?v=7AFkpnkYP4s&list=PLOnQtvVd3KITZzHS8Va1UuhNU85qSWNmn&index=3
+
+
+Se tuvo que instalar .net 5.0, un version compatible con Visual Studio 16.9. Para ello
+ingrese a dot.net en el navegador y se me redirigio a la pagina de descarga para .net
+
+Descarge la 5.05 que corresponnde al SDK 5.0.202
+Visual Studio support
+Visual Studio 2019 (v16.9)
+
+Luego para implementar algunos patrones de diseño intalo esta dependencia dirigiendome.
+darle click en la solucion y en Administrador de paquetes NuGet para la Solucion
+
+Las siguientes dependencias son para la injeccion de dependencias
+*Buscamos en el examinador MediatR e instalamos la version 9.0.0 en Web  Api
+*Tambien instalamos en la capa Aplication MediatR.Extensions.Microsft.DependencyInjection tambien en la version 9.0.0
+
+Las siguientes dependencias son para el mapeo de entidades a DTO
+*Tambien instalamos AutoMapper v. 10.1.1 en Application
+*Tambien instalamos AutoMapper.Extensions.Microsoft.DependencyInjection v. 8.1.1 en Application
+
+Las siguientes dependencias son para validaciones de tipado (Fueretemente tipado/Reglas fuertemente tipada)
+
+*FluentValidation v.10.1.0
+*FluentValidation.DependencyInjectionExtensions V.10.1.0
+
+
+Lo anterior no me sirvio
+__________________________________________________________________________________________________________________________
+
+Para realizar el proyecto usamos .net core 6.0 por lo que se requiere instalar Visual Studio 2022
+https://www.youtube.com/watch?v=eRTmNqUCjXM&list=WL&index=1&t=445s
+https://www.youtube.com/watch?v=SqZQffksa0w&t=546s
+
+
+ConectionString: Server=localhost\SQLEXPRESS;Database=tienda;Trusted_Connection=True;
+
+
+
+Utilizamos ASP.net Web Api
+Instalamos las siguientes dependencias en el administrador de paquetes nuget
+*Microsoft.EntityFrameworkCore.SqlServer v.6.0.4
+*Microsoft.EntityFrameworkCore.Tools v.6.0.4
+
+
+
+El siguiente comando jecutado en la consola de nuget (Herramisntas/Administrador de paquetes Nuget/Consola) para mapear las entidades de la base de datos
+*Scaffold-DbContext "Server=localhost\SQLEXPRESS;Database=tienda;Integrated Security=true" Microsoft.EntityFrameworkCore.SqlServer -OutPutDir Models
+
+using Microsoft.EntityFrameworkCore;
+using AdminTienda.Models;
+using AdminTienda.Context;
+
+builder.Services.AddDbContext<TiendaContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("CadenaConexion")));
+
+,
+  "ConnectionStrings": {
+    "CadenaConexion": "Server=localhost\\SQLEXPRESS;Database=tienda;Integrated Security=true"
+  }
+
+--create database tienda;
+use tienda;
+--Tabla categoría
+create table Category(
+       id int primary key identity(1,1),
+       name varchar(50) not null unique,
+       description varchar(256) null,
+       status bit default(1)
+);
+--insert into categoria (nombre,descripcion) values ('Cereales','');
+--select * from categoria;
+
+--Tabla artículo
+create table Product(
+       id int primary key identity(1,1),
+       categoryId int not null,
+       code varchar(50) null,
+       nameProd varchar(100) not null,
+       priceSale decimal(11,2) not null,
+       stock int not null,
+       description varchar(256) null,
+       status bit default(1),
+	   isDelete bit not NULL default(0)
+       CONSTRAINT FK_IDCATEGORY FOREIGN KEY (categoryId) REFERENCES Category(id)
+);
+
+--Tabla TipoDucumento
+create table TypeDocument(
+	id int primary key identity(1,1),
+	code varchar(3),
+	description varchar(50)
+);
+
+--Tabla Cliente
+create table Client(
+       id int primary key identity(1, 1),       
+       name varchar(100) not null,
+	   firstSurname varchar(100) not null,
+	   secondSurname varchar(100) null,
+       type_document varchar(3) not null,
+       num_document varchar(20) null,
+       address varchar(70) null,
+       telephone varchar(20) null,
+       email varchar(50) null
+);
+
+
+
+--Tabla venta
+create table Sale(
+       id int primary key identity(1,1),
+       idClient int not null,
+       dateSale datetime not null,
+       taxSale decimal (4,2) not null,
+       total decimal (11,2) not null,
+       status varchar(20) not null,
+       CONSTRAINT FK_IDCLIENT  FOREIGN KEY (idClient) REFERENCES Client (id),
+       --idUser int not null,       
+       --FOREIGN KEY (idUser) REFERENCES Users (id)
+);
+
+--Tabla DetailSale
+create table DetailSale(
+       id int primary key identity,
+       idSale int not null,
+       idProduct int not null,
+       amount int not null,
+       price decimal(11,2) not null,
+       discount decimal(11,2) not null,
+       CONSTRAINT FK_IDSALE FOREIGN KEY (idSale) REFERENCES Sale (id) ON DELETE CASCADE,
+       CONSTRAINT FK_IDPRODUCT FOREIGN KEY (idProduct) REFERENCES Product (id)
+);
+
+
+
+----Tabla rol
+--create table Rol(
+--       idrol int primary key identity(1,1),
+--       name varchar(30) not null,
+--       description varchar(100) null,
+--       status bit default(1)
+--);
+
+----Tabla usuario
+--create table Users(
+--       id int primary key identity(1,1),
+--       idrol int not null,
+--       nombre varchar(100) not null,
+--       tipo_documento varchar(20) null,
+--       num_documento varchar(20) null,
+--       direccion varchar(70) null,
+--       telefono varchar(20) null,
+--       email varchar(50) not null,
+--       password varbinary not null,
+--       status bit default(1),
+--       FOREIGN KEY (idrol) REFERENCES rol (idrol)
+--);
+
+
+--Tabla ingreso
+--create table Entry_product(
+--       id int primary key identity(1,1),
+--       idProvider integer not null,
+--       idUser integer not null,
+--       dateAt datetime not null,
+--       tax decimal (4,2) not null,
+--       amount decimal (11,2) not null,
+--       status varchar(20) not null,
+--       FOREIGN KEY (idProvider) REFERENCES Client (id),
+--       FOREIGN KEY (idUser) REFERENCES Users (id)
+--);
+
+----Tabla detalle_ingreso
+--create table detalle_ingreso(
+--       id int primary key identity(1,1),
+--       idEntryProduc int not null,
+--       idProduct int not null,
+--       cantidad int not null,
+--       precio decimal(11,2) not null,
+--       FOREIGN KEY (idEntryProduc) REFERENCES Entry_product (id) ON DELETE CASCADE,
+--       FOREIGN KEY (idProduct) REFERENCES Product (id)
+--);
+
+
+
+
+SELECT TOP(10)* FROM PRODUCT
+
+SELECT TOP(10)* FROM Category
+
+--INSERT INTO Category (name, description) VALUES ('Calzado','Calzado general');
+--INSERT INTO Category (name, description) VALUES ('Cereales','');
+--INSERT INTO Category (name, description) VALUES ('Deportes','');
+--INSERT INTO Category (name, description) VALUES ('Frutas','');
+--INSERT INTO Category (name, description) VALUES ('Tecnologia','');
+--INSERT INTO Category (name, description) VALUES ('ElectroHogar','');
+
+
+INSERT INTO Product(nameProd, code, stock,priceSale,description,categoryId) VALUES ('Balon de Futbol', '0001', 2, 20000.00, 'Un balón que combina comodidad de uso y resistencia.', 2);
+
+
+
+Front End Aviatur
+
+Creamos la app react js
+$ npx create-react-app front-admintienda
+
+Dentro de nuestro proyecto react instalamos
+$ npm i bootstrap reactstrap axios
+npx i bootstrap reactstrap axios
